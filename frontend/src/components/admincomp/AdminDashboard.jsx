@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../sockets/socket";
 import "./admin.css";
+import { get } from "../../helper/api_helper";
+import { GET_ALL_LOGS, GET_ALL_MESSAGES, GET_ALL_USERS } from "../../helper/url_helper";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -8,33 +10,52 @@ export default function AdminDashboard() {
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [view, setView] = useState("chats"); // "chats" or "logs"
+  const [view, setView] = useState("chats");
   const [allLogs, setAllLogs] = useState([]);
 
   const bottomRef = useRef(null);
 
   useEffect(() => {
     if (view === "logs") {
-      fetch("http://localhost:4000/logs/all")
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) setAllLogs(data);
-        })
-        .catch(err => console.error(err));
+      fetchAllLogs()
     }
   }, [view]);
 
+  const fetchAllLogs = async () => {
+    try {
+      const res = await get(GET_ALL_LOGS)
+      if (res.status === 200) {
+        const data = res.data
+        if (Array.isArray(data)) setAllLogs(data);
+      } else {
+        console.error(res)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
 
   useEffect(() => {
-    fetch("http://localhost:4000/users")
-      .then((res) => res.json())
-      .then((data) => {
+    fetchUsers()
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await get(GET_ALL_USERS)
+      if (res.status === 200) {
+        const data = res.data
         if (Array.isArray(data)) {
           setUsers(data.map(user => user.session_id));
         }
-      })
-      .catch(err => console.error(err));
-  }, []);
+      }
+      else {
+        console.error(res)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
 
   useEffect(() => {
@@ -46,7 +67,6 @@ export default function AdminDashboard() {
     });
 
     socket.on("receive:message", (msg) => {
-      // Update user details with last message and store all messages (avoid duplicates)
       setUserDetails((prev) => {
         const existing = prev[msg.sessionId] || {};
         const msgExists = existing.messages?.some(m => m.id === msg.id);
@@ -78,17 +98,21 @@ export default function AdminDashboard() {
     };
   }, [activeUser]);
 
-  // ✅ Load previous messages for selected user
   const loadMessages = async (sessionId) => {
     setActiveUser(sessionId);
 
     try {
-      const res = await fetch(`http://localhost:4000/messages/${sessionId}`);
-      const data = await res.json();
+
+      const res = await get(`${GET_ALL_MESSAGES}/${sessionId}`)
+      let data = []
+      if (res.status === 200) {
+        data = res.data
+      } else {
+        console.error(res)
+      }
 
       if (Array.isArray(data)) {
         setMessages(data);
-        // Count messages for stats and store all messages
         const userMessageCount = data.length;
         setUserDetails((prev) => ({
           ...prev,
@@ -109,7 +133,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // ✅ Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -128,7 +151,6 @@ export default function AdminDashboard() {
     setText("");
   };
 
-  // ✅ Export logs as JSON
   const exportLogs = () => {
     const logsData = {
       exportDate: new Date().toISOString(),
@@ -158,7 +180,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-container">
-      {/* LEFT SIDEBAR */}
       <div className="sidebar">
         <h2>📊 Admin</h2>
         <div className="menu">
@@ -189,7 +210,6 @@ export default function AdminDashboard() {
 
       {view === "chats" ? (
         <>
-          {/* USER LIST */}
           <div className="users-panel">
             <h3>Active Users</h3>
             {users.length === 0 && <p className="no-users">No active users</p>}
@@ -211,7 +231,6 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* CHAT PANEL */}
           <div className="chat-panel">
             {!activeUser && (
               <div className="no-user">
@@ -257,7 +276,6 @@ export default function AdminDashboard() {
           </div>
         </>
       ) : (
-        /* LOGS VIEW */
         <div className="logs-panel">
           <div className="logs-header">
             <h2>Message Logs</h2>
@@ -289,30 +307,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* {Object.entries(userDetails).length === 0 ? (
-                    <tr>
-                      <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
-                        No messages yet
-                      </td>
-                    </tr>
-                  ) : (
-                    users.flatMap((userId) =>
-                      Array.isArray(userDetails[userId]?.messages) && userDetails[userId].messages.length > 0
-                        ? userDetails[userId].messages.map((msg, idx) => (
-                          <tr key={`${userId}-${idx}`}>
-                            <td className="user-id-col">{userId.substring(0, 12)}...</td>
-                            <td className="sender-col">
-                              <span className={`badge badge-${msg.sender}`}>
-                                {msg.sender === "user" ? "👤 User" : "👨‍💼 Admin"}
-                              </span>
-                            </td>
-                            <td className="message-col">{msg.content}</td>
-                            <td className="time-col">{formatTime(msg.created_at)}</td>
-                          </tr>
-                        ))
-                        : []
-                    )
-                  )} */}
+
                   {allLogs.map((msg, index) => (
                     <tr key={index}>
                       <td className="user-id-col">{msg.session_id.substring(0, 12)}...</td>

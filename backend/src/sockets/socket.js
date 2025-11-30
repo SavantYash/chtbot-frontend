@@ -10,7 +10,6 @@ module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
-    /* USER JOIN */
     socket.on("user:join", async ({ sessionId }) => {
       const user = await findOrCreateUser(sessionId);
 
@@ -20,11 +19,9 @@ module.exports = (io) => {
         connectedUsers.push(sessionId);
       }
 
-      // Broadcast updated user list to all admins
       io.to("admin").emit("receive:users", connectedUsers);
     });
 
-    /* USER MESSAGE */
     socket.on("user:message", async ({ sessionId, content }) => {
       try {
         const user = await findOrCreateUser(sessionId);
@@ -35,7 +32,6 @@ module.exports = (io) => {
           content
         );
 
-        // Only send to admin - user already has the message from optimistic update
         io.to("admin").emit("receive:message", {
           sessionId,
           ...message
@@ -45,14 +41,11 @@ module.exports = (io) => {
       }
     });
 
-    /* ADMIN JOIN */
     socket.on("admin:join", async () => {
       socket.join("admin");
       
-      // Send all connected users first
       socket.emit("receive:users", connectedUsers);
       
-      // Load and send all message history for each user
       for (const sessionId of connectedUsers) {
         try {
           const messages = await getMessagesBySession(sessionId);
@@ -70,7 +63,6 @@ module.exports = (io) => {
       }
     });
 
-    /* ADMIN MESSAGE */
     socket.on("admin:message", async ({ sessionId, content }) => {
       try {
         const user = await findOrCreateUser(sessionId);
@@ -81,13 +73,11 @@ module.exports = (io) => {
           content
         );
 
-        // Send to specific user
         io.to(sessionId).emit("receive:message", {
           sessionId,
           ...message
         });
 
-        // Also notify all admins
         io.to("admin").emit("receive:message", {
           sessionId,
           ...message
@@ -97,7 +87,6 @@ module.exports = (io) => {
       }
     });
 
-    /* USER-TO-USER MESSAGE */
     socket.on("user:private-message", async ({ fromSessionId, toSessionId, content }) => {
       try {
         const fromUser = await findOrCreateUser(fromSessionId);
@@ -108,14 +97,12 @@ module.exports = (io) => {
           content
         );
 
-        // Send to specific user
         io.to(toSessionId).emit("receive:private-message", {
           fromSessionId,
           toSessionId,
           ...message
         });
 
-        // Also notify admin
         io.to("admin").emit("receive:message", {
           sessionId: fromSessionId,
           ...message
@@ -127,7 +114,6 @@ module.exports = (io) => {
 
     socket.on("disconnect", () => {
       console.log("Disconnected:", socket.id);
-      // Remove from connected users
       connectedUsers = connectedUsers.filter(u => u !== socket.id);
       io.to("admin").emit("receive:users", connectedUsers);
     });

@@ -14,7 +14,7 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    // Simulate auth delay
+    
     setTimeout(() => {
       if (user === "admin" && pass === "1234") {
         localStorage.setItem("adminAuth", "true");
