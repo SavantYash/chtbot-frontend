@@ -9,8 +9,33 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [view, setView] = useState("chats"); // "chats" or "logs"
+  const [allLogs, setAllLogs] = useState([]);
 
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    if (view === "logs") {
+      fetch("http://localhost:4000/logs/all")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setAllLogs(data);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [view]);
+
+
+  useEffect(() => {
+    fetch("http://localhost:4000/users")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setUsers(data.map(user => user.session_id));
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
+
 
   useEffect(() => {
     socket.connect();
@@ -21,18 +46,29 @@ export default function AdminDashboard() {
     });
 
     socket.on("receive:message", (msg) => {
-      // Update user details with last message
-      setUserDetails((prev) => ({
-        ...prev,
-        [msg.sessionId]: {
-          lastMessage: msg.content,
-          lastMessageTime: msg.created_at,
-          messageCount: (prev[msg.sessionId]?.messageCount || 0) + 1
-        }
-      }));
+      // Update user details with last message and store all messages (avoid duplicates)
+      setUserDetails((prev) => {
+        const existing = prev[msg.sessionId] || {};
+        const msgExists = existing.messages?.some(m => m.id === msg.id);
+
+        return {
+          ...prev,
+          [msg.sessionId]: {
+            lastMessage: msg.content,
+            lastMessageTime: msg.created_at,
+            messageCount: msgExists ? (prev[msg.sessionId]?.messageCount || 0) : (prev[msg.sessionId]?.messageCount || 0) + 1,
+            messages: msgExists
+              ? existing.messages
+              : [...(existing.messages || []), msg]
+          }
+        };
+      });
 
       if (msg.sessionId === activeUser) {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => {
+          const msgExists = prev.some(m => m.id === msg.id);
+          return msgExists ? prev : [...prev, msg];
+        });
       }
     });
 
@@ -52,13 +88,14 @@ export default function AdminDashboard() {
 
       if (Array.isArray(data)) {
         setMessages(data);
-        // Count messages for stats
+        // Count messages for stats and store all messages
         const userMessageCount = data.length;
         setUserDetails((prev) => ({
           ...prev,
           [sessionId]: {
             ...prev[sessionId],
             messageCount: userMessageCount,
+            messages: data,
             lastMessage: data.length > 0 ? data[data.length - 1].content : "No messages",
             lastMessageTime: data.length > 0 ? data[data.length - 1].created_at : null
           }
@@ -229,37 +266,69 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <div className="logs-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>User ID</th>
-                  <th>Last Message</th>
-                  <th>Message Count</th>
-                  <th>Last Activity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
+          <div className="logs-content">
+            <div className="logs-summary">
+              <div className="summary-stat">
+                <span className="stat-label">Total Users:</span>
+                <span className="stat-value">{users.length}</span>
+              </div>
+              <div className="summary-stat">
+                <span className="stat-label">Total Messages:</span>
+                <span className="stat-value">{Object.values(userDetails).reduce((sum, u) => sum + (u.messageCount || 0), 0)}</span>
+              </div>
+            </div>
+
+            <div className="logs-table">
+              <table>
+                <thead>
                   <tr>
-                    <td colSpan="4" style={{ textAlign: "center" }}>
-                      No users
-                    </td>
+                    <th>User ID</th>
+                    <th>Sender</th>
+                    <th>Message</th>
+                    <th>Time</th>
                   </tr>
-                ) : (
-                  users.map((u, i) => (
-                    <tr key={i}>
-                      <td>{u.substring(0, 12)}...</td>
-                      <td className="truncate">
-                        {userDetails[u]?.lastMessage || "—"}
+                </thead>
+                <tbody>
+                  {/* {Object.entries(userDetails).length === 0 ? (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
+                        No messages yet
                       </td>
-                      <td>{userDetails[u]?.messageCount || 0}</td>
-                      <td>{formatTime(userDetails[u]?.lastMessageTime)}</td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    users.flatMap((userId) =>
+                      Array.isArray(userDetails[userId]?.messages) && userDetails[userId].messages.length > 0
+                        ? userDetails[userId].messages.map((msg, idx) => (
+                          <tr key={`${userId}-${idx}`}>
+                            <td className="user-id-col">{userId.substring(0, 12)}...</td>
+                            <td className="sender-col">
+                              <span className={`badge badge-${msg.sender}`}>
+                                {msg.sender === "user" ? "👤 User" : "👨‍💼 Admin"}
+                              </span>
+                            </td>
+                            <td className="message-col">{msg.content}</td>
+                            <td className="time-col">{formatTime(msg.created_at)}</td>
+                          </tr>
+                        ))
+                        : []
+                    )
+                  )} */}
+                  {allLogs.map((msg, index) => (
+                    <tr key={index}>
+                      <td className="user-id-col">{msg.session_id.substring(0, 12)}...</td>
+                      <td className="sender-col">
+                        <span className={`badge badge-${msg.sender}`}>
+                          {msg.sender === "user" ? "👤 User" : "👨‍💼 Admin"}
+                        </span>
+                      </td>
+                      <td className="message-col">{msg.content}</td>
+                      <td className="time-col">{formatTime(msg.created_at)}</td>
+                    </tr>
+                  ))}
+
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

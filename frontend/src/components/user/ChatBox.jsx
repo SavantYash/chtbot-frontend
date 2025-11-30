@@ -47,12 +47,24 @@ export default function ChatBox({ close }) {
     socket.on("receive:message", (message) => {
       // Only add admin messages, user messages are added optimistically
       if (message.sender === "admin") {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          const msgExists = prev.some(m => m.id === message.id);
+          return msgExists ? prev : [...prev, message];
+        });
       }
+    });
+
+    // ✅ RECEIVE PRIVATE MESSAGES FROM OTHER USERS
+    socket.on("receive:private-message", (message) => {
+      setMessages((prev) => {
+        const msgExists = prev.some(m => m.id === message.id);
+        return msgExists ? prev : [...prev, message];
+      });
     });
 
     return () => {
       socket.off("receive:message");
+      socket.off("receive:private-message");
     };
   }, []);
 
@@ -199,9 +211,10 @@ const styles = {
     borderRadius: "20px",
     fontSize: "13px",
     outline: "none",
-    background: "#f5f7fa",
     fontFamily: "inherit",
-    transition: "all 0.2s"
+    transition: "all 0.2s",
+    background: "#eef2ff",
+    color: "#1f2937"
   },
   sendBtn: {
     background: "#4f46e5",

@@ -252,8 +252,13 @@
   display: flex;
   gap: 10px;
   border-top: 1px solid #e1e4e8;
-  background: white;
+  background: #eef2ff;
+  color: #1f2937;
   box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.chat-input input::placeholder {
+  color: #6b7280;
 }
 
 .chat-input input {
@@ -351,7 +356,41 @@
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* TABLE */
+.logs-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.logs-summary {
+  display: flex;
+  gap: 20px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+}
+
+.summary-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 16px;
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+/* LOGS TABLE */
 .logs-table {
   flex: 1;
   overflow-x: auto;
@@ -387,11 +426,47 @@
   background: #f9fafb;
 }
 
-.logs-table .truncate {
-  max-width: 300px;
+.user-id-col {
+  font-family: 'Courier New', monospace;
+  color: #4f46e5;
+  font-weight: 600;
+  max-width: 120px;
+}
+
+.sender-col {
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-user {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.badge-admin {
+  background: #dbeafe;
+  color: #0369a1;
+}
+
+.message-col {
+  max-width: 400px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.time-col {
+  color: #999;
+  white-space: nowrap;
+  font-size: 12px;
 }
 
 /* SCROLLBAR */
