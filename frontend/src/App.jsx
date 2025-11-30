@@ -9,15 +9,15 @@ import AdminDashboard from './components/admincomp/AdminDashboard';
 function App() {
   return (
     <>
-      <ChatWidget />
       {/* <Routes>
         {
           protectedRoutes.map((r) => {
             <Route key={r.path}path={r.path} Component={r.component}  />
-          })
-        }
-      </Routes> */}
+            })
+            }
+            </Routes> */}
       <Routes>
+        <Route path='/' element={<ChatWidget />} />
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>

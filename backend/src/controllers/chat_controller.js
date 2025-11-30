@@ -1,7 +1,8 @@
 const {
   getAllUsers,
   getMessagesBySession,
-  getUsersWithLastMessage
+  getAllMessages,
+  getMessageStats
 } = require("../services/chat_services");
 
 exports.fetchUsers = async (req, res) => {
@@ -13,19 +14,28 @@ exports.fetchUsers = async (req, res) => {
   }
 };
 
-exports.fetchUsersWithLastMessage = async (req, res) => {
+exports.fetchMessages = async (req, res) => {
   try {
-    const users = await getUsersWithLastMessage();
-    res.json(users);
+    const messages = await getMessagesBySession(req.params.sessionId);
+    res.json(messages);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-exports.fetchMessages = async (req, res) => {
+exports.fetchAllLogs = async (req, res) => {
   try {
-    const messages = await getMessagesBySession(req.params.sessionId);
-    res.json(messages);
+    const logs = await getAllMessages();
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.fetchMessageStats = async (req, res) => {
+  try {
+    const stats = await getMessageStats();
+    res.json(stats);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

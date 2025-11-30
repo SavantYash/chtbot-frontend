@@ -42,27 +42,48 @@ async function getMessagesBySession(sessionId) {
   if (user.rows.length === 0) return [];
 
   const messages = await pool.query(
-    "SELECT sender, content, created_at FROM messages WHERE user_id=$1 ORDER BY created_at ASC",
+    "SELECT id, sender, content, created_at FROM messages WHERE user_id=$1 ORDER BY created_at ASC",
     [user.rows[0].id]
   );
 
   return messages.rows;
 }
 
-async function getUsersWithLastMessage() {
-  const result = await pool.query(
-    `SELECT 
-      u.session_id,
-      u.created_at,
-      m.content as last_message,
-      m.created_at as last_message_time
-    FROM users u
-    LEFT JOIN messages m ON u.id = (
-      SELECT user_id FROM messages WHERE user_id = u.id ORDER BY created_at DESC LIMIT 1
-    ) AND m.user_id = u.id
-    ORDER BY COALESCE(m.created_at, u.created_at) DESC`
+async function getAllMessages() {
+  const messages = await pool.query(
+    `SELECT m.id, m.sender, m.content, m.created_at, u.session_id
+     FROM messages m
+     JOIN users u ON m.user_id = u.id
+     ORDER BY m.created_at DESC
+     LIMIT 1000`
   );
-  return result.rows;
+  return messages.rows;
+}
+
+async function getMessageStats() {
+  const stats = await pool.query(
+    `SELECT 
+      COUNT(DISTINCT u.id) as total_users,
+      COUNT(m.id) as total_messages,
+      SUM(CASE WHEN m.sender = 'user' THEN 1 ELSE 0 END) as user_messages,
+      SUM(CASE WHEN m.sender = 'admin' THEN 1 ELSE 0 END) as admin_messages
+     FROM users u
+     LEFT JOIN messages m ON u.id = m.user_id`
+  );
+  return stats.rows[0];
+}
+
+async function getLastMessageByUser(sessionId) {
+  const result = await pool.query(
+    `SELECT m.content, m.created_at
+     FROM messages m
+     JOIN users u ON m.user_id = u.id
+     WHERE u.session_id = $1
+     ORDER BY m.created_at DESC
+     LIMIT 1`,
+    [sessionId]
+  );
+  return result.rows[0] || null;
 }
 
 module.exports = {
@@ -70,5 +91,7 @@ module.exports = {
   saveMessage,
   getAllUsers,
   getMessagesBySession,
-  getUsersWithLastMessage
+  getAllMessages,
+  getMessageStats,
+  getLastMessageByUser
 };
