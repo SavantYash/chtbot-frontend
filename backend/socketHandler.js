@@ -42,6 +42,7 @@ function setupSocket(io) {
 
     // USER MESSAGE
     socket.on("user:message", async (data) => {
+      console.log("USER MESSAGE RECEIVED:", data);
       try {
         const { sessionId, content } = data;
 

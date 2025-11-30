@@ -4,7 +4,6 @@ import ChatWidget from "../components/user/ChatWidget";
 
 
 export const protectedRoutes = [
-    { path: "/", component: <ChatWidget /> },
     { path: "/admin", component: <AdminLogin /> },
     { path: "/admin/dashboard", component: <AdminDashboard /> }
 ]
