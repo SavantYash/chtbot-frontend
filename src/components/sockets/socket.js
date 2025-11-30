@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:4000";  
-
-export const socket = io(SOCKET_URL, {
+export const socket = io("https://chtbot-backend-production.up.railway.app", {
+  transports: ["websocket"],
+  secure: true,
   autoConnect: false
-});
+})
