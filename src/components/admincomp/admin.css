@@ -270,6 +270,7 @@
   font-size: 14px;
   transition: all 0.2s ease;
   background: #f9fafb;
+  color: black;
 }
 
 .chat-input input:focus {

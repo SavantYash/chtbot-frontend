@@ -12,6 +12,7 @@ export default function AdminDashboard() {
   const [text, setText] = useState("");
   const [view, setView] = useState("chats");
   const [allLogs, setAllLogs] = useState([]);
+  const [Logloading, setLogloading] = useState(true)
 
   const bottomRef = useRef(null);
 
@@ -32,6 +33,8 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.log(err)
+    } finally {
+      setLogloading(false)
     }
   }
 
@@ -308,18 +311,19 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
 
-                  {allLogs.map((msg, index) => (
-                    <tr key={index}>
-                      <td className="user-id-col">{msg.session_id.substring(0, 12)}...</td>
-                      <td className="sender-col">
-                        <span className={`badge badge-${msg.sender}`}>
-                          {msg.sender === "user" ? "👤 User" : "👨‍💼 Admin"}
-                        </span>
-                      </td>
-                      <td className="message-col">{msg.content}</td>
-                      <td className="time-col">{formatTime(msg.created_at)}</td>
-                    </tr>
-                  ))}
+                  {Logloading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loggs Are loading...</div> :
+                    allLogs.map((msg, index) => (
+                      <tr key={index}>
+                        <td className="user-id-col">{msg.session_id.substring(0, 12)}...</td>
+                        <td className="sender-col">
+                          <span className={`badge badge-${msg.sender}`}>
+                            {msg.sender === "user" ? "👤 User" : "👨‍💼 Admin"}
+                          </span>
+                        </td>
+                        <td className="message-col">{msg.content}</td>
+                        <td className="time-col">{formatTime(msg.created_at)}</td>
+                      </tr>
+                    ))}
 
                 </tbody>
               </table>

@@ -1,16 +1,17 @@
-# React + Vite
+# ChatBot Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The repository contain frontend side of chatbot, which inludes two separete path end user + admin.
 
-Currently, two official plugins are available:
+## end user
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1) end user can chat with support or admin live.
+2) user can see the previous history.
+3) it doesnt neccesory to create account, the data store in format of session id.
+4) The messages have timestamp.
 
-## React Compiler
+## admin
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1) Admin can see all user chats & give reply to them.
+2) Admin can maintain the logs of previous messages.
+3) All logs are well mentain with timestamp.
+4) Admin can able to export the data in json format.
