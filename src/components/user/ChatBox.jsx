@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../sockets/socket";
 import Message from "./Message";
-import "./chatbox.css";
+import "./ChatBox.css";
 import { get } from "../../helper/api_helper";
 import { GET_ALL_MESSAGES } from "../../helper/url_helper";
 
